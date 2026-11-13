@@ -1,1 +1,99 @@
 
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Two Player Racing</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <main class="container">
+    <header>
+      <p class="tag">JUEGO DE CARRERAS · 2 JUGADORES</p>
+      <h1>TWO PLAYER <span>RACING</span></h1>
+      <p class="subtitle">¡Dos pilotos, una meta y un solo ganador!</p>
+    </header>
+
+    <section id="setup" class="panel">
+      <h2>PERSONALIZA TU CARRERA</h2>
+
+      <div class="players">
+        <div class="player-card">
+          <h3>JUGADOR 1</h3>
+          <label for="color1">Color del vehículo</label>
+          <select id="color1">
+            <option value="#ff5252">Rojo</option>
+            <option value="#42a5f5">Azul</option>
+            <option value="#ffd54f">Amarillo</option>
+            <option value="#66bb6a">Verde</option>
+            <option value="#eeeeee">Blanco</option>
+          </select>
+
+          <label for="car1">Tipo de vehículo</label>
+          <select id="car1">
+            <option value="sport">Deportivo</option>
+            <option value="rally">Rally</option>
+          </select>
+          <p class="controls">Controles: W A S D</p>
+        </div>
+
+        <div class="player-card">
+          <h3>JUGADOR 2</h3>
+          <label for="color2">Color del vehículo</label>
+          <select id="color2">
+            <option value="#42a5f5">Azul</option>
+            <option value="#ff5252">Rojo</option>
+            <option value="#ffd54f">Amarillo</option>
+            <option value="#66bb6a">Verde</option>
+            <option value="#eeeeee">Blanco</option>
+          </select>
+
+          <label for="car2">Tipo de vehículo</label>
+          <select id="car2">
+            <option value="sport">Deportivo</option>
+            <option value="rally">Rally</option>
+          </select>
+          <p class="controls">Controles: Flechas del teclado</p>
+        </div>
+      </div>
+
+      <label for="difficulty">Dificultad de la carrera</label>
+      <select id="difficulty">
+        <option value="easy">Fácil</option>
+        <option value="normal" selected>Normal</option>
+        <option value="hard">Difícil</option>
+      </select>
+
+      <button id="startButton">¡COMENZAR CARRERA!</button>
+    </section>
+
+    <section id="raceArea" class="panel" hidden>
+      <div class="race-info">
+        <div>JUGADOR 1 <strong id="progress1">0%</strong></div>
+        <div>JUGADOR 2 <strong id="progress2">0%</strong></div>
+      </div>
+
+      <canvas id="raceCanvas" width="900" height="600"></canvas>
+
+      <div class="instructions">
+        <span>Jugador 1: W A S D</span>
+        <span>Jugador 2: ↑ ↓ ← →</span>
+      </div>
+    </section>
+
+    <section id="result" class="panel" hidden>
+      <p class="tag">FIN DE LA CARRERA</p>
+      <h2 id="winnerText">¡TENEMOS UN GANADOR!</h2>
+      <p id="resultMessage"></p>
+      <button id="againButton">JUGAR OTRA VEZ</button>
+      <button id="menuButton" class="secondary">VOLVER AL MENÚ</button>
+    </section>
+
+    <footer>HECHO CON HTML · CSS · JAVASCRIPT</footer>
+  </main>
+
+  <script src="script.js"></script>
+</body>
+</html>
+
