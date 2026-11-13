@@ -1,196 +1,364 @@
 
-* {
-  box-sizing: border-box;
+const canvas = document.getElementById("raceCanvas");
+const ctx = canvas.getContext("2d");
+
+const setup = document.getElementById("setup");
+const raceArea = document.getElementById("raceArea");
+const result = document.getElementById("result");
+
+const progress1 = document.getElementById("progress1");
+const progress2 = document.getElementById("progress2");
+const winnerText = document.getElementById("winnerText");
+const resultMessage = document.getElementById("resultMessage");
+
+const startButton = document.getElementById("startButton");
+const againButton = document.getElementById("againButton");
+const menuButton = document.getElementById("menuButton");
+
+const keys = {};
+
+let players = [];
+let obstacles = [];
+let running = false;
+let lastTime = 0;
+let animationId = null;
+
+const finishY = 65;
+const startY = 525;
+
+const lanes = [
+  { min: 105, max: 410, center: 255 },
+  { min: 490, max: 795, center: 645 }
+];
+
+function createPlayer(number, color, type) {
+  return {
+    number,
+    x: lanes[number - 1].center,
+    y: startY,
+    color,
+    type,
+    speed: 220,
+    cooldown: 0,
+    finished: false
+  };
 }
 
-body {
-  margin: 0;
-  min-height: 100vh;
-  background: radial-gradient(circle at top, #26394c, #101722 65%);
-  color: #f4f6fa;
-  font-family: Arial, sans-serif;
-}
+function createObstacles() {
+  obstacles = [];
 
-.container {
-  width: min(1000px, calc(100% - 28px));
-  margin: 30px auto;
-}
+  const positions = [
+    { x: 175, y: 425, lane: 1 },
+    { x: 335, y: 330, lane: 1 },
+    { x: 180, y: 225, lane: 1 },
+    { x: 330, y: 135, lane: 1 },
 
-header {
-  text-align: center;
-  margin-bottom: 25px;
-}
+    { x: 570, y: 425, lane: 2 },
+    { x: 735, y: 330, lane: 2 },
+    { x: 570, y: 225, lane: 2 },
+    { x: 730, y: 135, lane: 2 }
+  ];
 
-.tag {
-  color: #61e6cf;
-  font-size: 12px;
-  font-weight: bold;
-  letter-spacing: 3px;
-}
-
-h1 {
-  font-size: clamp(28px, 5vw, 48px);
-  margin: 8px 0;
-  letter-spacing: 2px;
-}
-
-h1 span {
-  color: #61e6cf;
-}
-
-.subtitle {
-  color: #bac7d4;
-}
-
-.panel {
-  padding: 25px;
-  background: #192532;
-  border: 1px solid #3a5061;
-  border-radius: 14px;
-  box-shadow: 0 15px 40px #0006;
-}
-
-.panel h2 {
-  text-align: center;
-  margin-top: 0;
-  color: #61e6cf;
-}
-
-.players {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 18px;
-  margin: 20px 0;
-}
-
-.player-card {
-  padding: 20px;
-  background: #223343;
-  border: 1px solid #405a6d;
-  border-radius: 10px;
-}
-
-.player-card h3 {
-  color: #61e6cf;
-  margin-top: 0;
-}
-
-label {
-  display: block;
-  margin: 15px 0 7px;
-  color: #dce6ed;
-  font-size: 14px;
-}
-
-select {
-  width: 100%;
-  padding: 12px;
-  color: white;
-  background: #101a24;
-  border: 1px solid #536b7c;
-  border-radius: 7px;
-  font-size: 15px;
-}
-
-.controls {
-  color: #b4c4d0;
-  font-size: 13px;
-  margin-bottom: 0;
-}
-
-button {
-  display: block;
-  width: 100%;
-  margin-top: 22px;
-  padding: 15px;
-  background: #61e6cf;
-  color: #10202a;
-  border: 0;
-  border-radius: 8px;
-  font-size: 15px;
-  font-weight: bold;
-  cursor: pointer;
-  transition: .2s;
-}
-
-button:hover {
-  background: #8bffea;
-  transform: translateY(-2px);
-}
-
-button.secondary {
-  background: #354b5d;
-  color: white;
-  margin-top: 10px;
-}
-
-.race-info {
-  display: flex;
-  justify-content: space-between;
-  gap: 15px;
-  margin-bottom: 15px;
-  font-size: 14px;
-}
-
-.race-info strong {
-  color: #61e6cf;
-  margin-left: 8px;
-}
-
-canvas {
-  display: block;
-  width: 100%;
-  height: auto;
-  background: #263b32;
-  border: 3px solid #72828b;
-  border-radius: 8px;
-}
-
-.instructions {
-  display: flex;
-  justify-content: space-around;
-  gap: 10px;
-  flex-wrap: wrap;
-  margin-top: 15px;
-  color: #c5d2dc;
-  font-size: 14px;
-}
-
-#result {
-  text-align: center;
-}
-
-#result h2 {
-  font-size: 30px;
-}
-
-#result p:not(.tag) {
-  color: #c5d2dc;
-}
-
-footer {
-  text-align: center;
-  padding: 22px 0;
-  color: #8295a5;
-  font-size: 11px;
-  letter-spacing: 2px;
-}
-
-[hidden] {
-  display: none !important;
-}
-
-@media (max-width: 650px) {
-  .players {
-    grid-template-columns: 1fr;
-  }
-
-  .panel {
-    padding: 15px;
-  }
-
-  .race-info {
-    font-size: 12px;
+  for (const item of positions) {
+    obstacles.push({
+      x: item.x,
+      y: item.y,
+      lane: item.lane,
+      width: 43,
+      height: 35
+    });
   }
 }
 
+function startRace() {
+  const color1 = document.getElementById("color1").value;
+  const color2 = document.getElementById("color2").value;
+  const car1 = document.getElementById("car1").value;
+  const car2 = document.getElementById("car2").value;
+  const difficulty = document.getElementById("difficulty").value;
+
+  const speedSettings = {
+    easy: 180,
+    normal: 220,
+    hard: 260
+  };
+
+  players = [
+    createPlayer(1, color1, car1),
+    createPlayer(2, color2, car2)
+  ];
+
+  players.forEach(player => {
+    player.speed = speedSettings[difficulty];
+  });
+
+  createObstacles();
+
+  setup.hidden = true;
+  result.hidden = true;
+  raceArea.hidden = false;
+
+  running = true;
+  lastTime = performance.now();
+
+  cancelAnimationFrame(animationId);
+  animationId = requestAnimationFrame(gameLoop);
+}
+
+startButton.addEventListener("click", startRace);
+againButton.addEventListener("click", startRace);
+
+menuButton.addEventListener("click", () => {
+  running = false;
+  cancelAnimationFrame(animationId);
+  raceArea.hidden = true;
+  result.hidden = true;
+  setup.hidden = false;
+});
+
+window.addEventListener("keydown", event => {
+  if (
+    ["ArrowUp", "ArrowDown", "ArrowLeft", "ArrowRight", " "].includes(event.key)
+  ) {
+    event.preventDefault();
+  }
+
+  keys[event.key.toLowerCase()] = true;
+});
+
+window.addEventListener("keyup", event => {
+  keys[event.key.toLowerCase()] = false;
+});
+
+function updatePlayer(player, dt) {
+  if (player.finished) return;
+
+  const lane = lanes[player.number - 1];
+
+  let dx = 0;
+  let dy = 0;
+
+  if (player.number === 1) {
+    if (keys.a) dx -= 1;
+    if (keys.d) dx += 1;
+    if (keys.w) dy -= 1;
+    if (keys.s) dy += 1;
+  } else {
+    if (keys.arrowleft) dx -= 1;
+    if (keys.arrowright) dx += 1;
+    if (keys.arrowup) dy -= 1;
+    if (keys.arrowdown) dy += 1;
+  }
+
+  if (dx !== 0 && dy !== 0) {
+    dx *= Math.SQRT1_2;
+    dy *= Math.SQRT1_2;
+  }
+
+  player.x += dx * player.speed * dt;
+  player.y += dy * player.speed * dt;
+
+  player.x = Math.max(lane.min + 20, Math.min(lane.max - 20, player.x));
+  player.y = Math.max(finishY + 5, Math.min(555, player.y));
+
+  if (player.cooldown > 0) {
+    player.cooldown -= dt;
+  }
+
+  checkObstacleCollision(player);
+
+  if (player.y <= finishY + 5) {
+    player.finished = true;
+    finishRace(player.number);
+  }
+}
+
+function checkObstacleCollision(player) {
+  if (player.cooldown > 0) return;
+
+  for (const obstacle of obstacles) {
+    const touching =
+      Math.abs(player.x - obstacle.x) < 35 &&
+      Math.abs(player.y - obstacle.y) < 35;
+
+    if (touching) {
+      player.y = Math.min(555, player.y + 45);
+      player.cooldown = 0.8;
+      break;
+    }
+  }
+}
+
+function finishRace(winner) {
+  if (!running) return;
+
+  running = false;
+  cancelAnimationFrame(animationId);
+
+  winnerText.textContent = `¡GANÓ EL JUGADOR ${winner}!`;
+  resultMessage.textContent =
+    `El jugador ${winner} llegó primero a la línea de meta. ¡Excelente carrera!`;
+
+  raceArea.hidden = true;
+  result.hidden = false;
+}
+
+function drawTrack() {
+  ctx.fillStyle = "#294333";
+  ctx.fillRect(0, 0, 900, 600);
+
+  // Dos pistas separadas.
+  ctx.fillStyle = "#343b43";
+  ctx.fillRect(80, 0, 340, 600);
+  ctx.fillRect(480, 0, 340, 600);
+
+  // Bordes de las pistas.
+  ctx.fillStyle = "#e6e6e6";
+  ctx.fillRect(80, 0, 7, 600);
+  ctx.fillRect(413, 0, 7, 600);
+  ctx.fillRect(480, 0, 7, 600);
+  ctx.fillRect(813, 0, 7, 600);
+
+  // Líneas discontinuas.
+  ctx.fillStyle = "#f5f0ce";
+
+  for (let y = 0; y < 600; y += 65) {
+    ctx.fillRect(245, y, 5, 35);
+    ctx.fillRect(645, y, 5, 35);
+  }
+
+  // Separación central.
+  ctx.fillStyle = "#61e6cf";
+  ctx.fillRect(448, 0, 4, 600);
+
+  // Línea de meta a cuadros.
+  for (let x = 80; x < 820; x += 30) {
+    for (let y = 48; y < 72; y += 12) {
+      ctx.fillStyle = ((x + y) / 12) % 2 < 1 ? "#ffffff" : "#111111";
+      ctx.fillRect(x, y, 30, 12);
+    }
+  }
+
+  ctx.fillStyle = "#ffffff";
+  ctx.font = "bold 16px Arial";
+  ctx.textAlign = "center";
+  ctx.fillText("META", 450, 35);
+
+  ctx.fillStyle = "#61e6cf";
+  ctx.font = "bold 15px Arial";
+  ctx.fillText("JUGADOR 1", 250, 25);
+  ctx.fillText("JUGADOR 2", 650, 25);
+}
+
+function drawObstacles() {
+  for (const obstacle of obstacles) {
+    ctx.fillStyle = "#e5a33d";
+    ctx.fillRect(
+      obstacle.x - obstacle.width / 2,
+      obstacle.y - obstacle.height / 2,
+      obstacle.width,
+      obstacle.height
+    );
+
+    ctx.fillStyle = "#242a2e";
+
+    for (let i = 0; i < 3; i++) {
+      ctx.save();
+      ctx.translate(obstacle.x - 12 + i * 12, obstacle.y);
+      ctx.rotate(-0.5);
+      ctx.fillRect(-3, -18, 6, 36);
+      ctx.restore();
+    }
+  }
+}
+
+function drawCar(player) {
+  ctx.save();
+  ctx.translate(player.x, player.y);
+
+  // Sombra.
+  ctx.fillStyle = "#00000066";
+  ctx.fillRect(-17, -23, 38, 50);
+
+  // Ruedas.
+  ctx.fillStyle = "#101316";
+  ctx.fillRect(-19, -17, 7, 15);
+  ctx.fillRect(12, -17, 7, 15);
+  ctx.fillRect(-19, 8, 7, 15);
+  ctx.fillRect(12, 8, 7, 15);
+
+  // Carrocería.
+  ctx.fillStyle = player.color;
+
+  if (player.type === "rally") {
+    ctx.fillRect(-15, -25, 30, 50);
+    ctx.fillStyle = "#26323a";
+    ctx.fillRect(-11, -13, 22, 13);
+    ctx.fillRect(-11, 8, 22, 7);
+  } else {
+    ctx.beginPath();
+    ctx.moveTo(0, -27);
+    ctx.lineTo(15, -12);
+    ctx.lineTo(13, 22);
+    ctx.lineTo(-13, 22);
+    ctx.lineTo(-15, -12);
+    ctx.closePath();
+    ctx.fill();
+
+    ctx.fillStyle = "#26323a";
+    ctx.fillRect(-10, -12, 20, 13);
+  }
+
+  // Luces delanteras.
+  ctx.fillStyle = "#fff4a8";
+  ctx.fillRect(-12, -24, 7, 4);
+  ctx.fillRect(5, -24, 7, 4);
+
+  // Número del jugador.
+  ctx.fillStyle = "#ffffff";
+  ctx.font = "bold 11px Arial";
+  ctx.textAlign = "center";
+  ctx.fillText(player.number, 0, 7);
+
+  ctx.restore();
+}
+
+function drawRace() {
+  drawTrack();
+  drawObstacles();
+
+  players.forEach(drawCar);
+}
+
+function updateProgress() {
+  players.forEach(player => {
+    const progress = Math.max(
+      0,
+      Math.min(100, Math.round(
+        ((startY - player.y) / (startY - finishY)) * 100
+      ))
+    );
+
+    if (player.number === 1) {
+      progress1.textContent = `${progress}%`;
+    } else {
+      progress2.textContent = `${progress}%`;
+    }
+  });
+}
+
+function gameLoop(timestamp) {
+  if (!running) return;
+
+  const dt = Math.min((timestamp - lastTime) / 1000, 0.04);
+  lastTime = timestamp;
+
+  players.forEach(player => updatePlayer(player, dt));
+
+  drawRace();
+  updateProgress();
+
+  if (running) {
+    animationId = requestAnimationFrame(gameLoop);
+  }
+}
